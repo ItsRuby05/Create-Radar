@@ -20,9 +20,9 @@ public class ModItems {
             .register();
     public static final ItemEntry<TargetFilterItem> TARGET_FILTER_ITEM = REGISTRATE.item("target_filter_item", TargetFilterItem::new)
             .register();
-    public static final ItemEntry<Binoculars> BINOCULARS = REGISTRATE.item("binoculars", Binoculars::new)
-            .register();
-
+    public static final ItemEntry<Binoculars> BINOCULARS =
+            REGISTRATE.item("binoculars", p -> new Binoculars(p.stacksTo(1)))
+                    .register();
     public static void register() {
         CreateRadar.getLogger().info("Registering Items!");
     }

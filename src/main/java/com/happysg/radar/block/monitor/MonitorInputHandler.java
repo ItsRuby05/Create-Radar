@@ -2,7 +2,9 @@ package com.happysg.radar.block.monitor;
 
 
 import com.happysg.radar.block.radar.track.RadarTrack;
+import com.happysg.radar.compat.Mods;
 import com.happysg.radar.compat.vs2.PhysicsHandler;
+import com.happysg.radar.config.RadarConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -35,11 +37,15 @@ public class MonitorInputHandler {
     public static RadarTrack findTrack(Level level, Vec3 hit, MonitorBlockEntity controller) {
         if (controller.getRadarCenterPos() == null)
             return null;
-        Ship ship = controller.getShip();
+        Ship ship = null;
+        if(Mods.VALKYRIENSKIES.isLoaded()){
+            ship = controller.getShip();
+        }
         if (ship != null) {
             // Work in ship-local coordinates when the monitor is ship-managed.
             hit = PhysicsHandler.getShipVec(hit, controller);
         }
+
 
         Direction facing = level.getBlockState(controller.getControllerPos())
                 .getValue(MonitorBlock.FACING).getClockWise();
@@ -144,7 +150,12 @@ public class MonitorInputHandler {
             be.setSelectedTargetServer(null);
             be.notifyUpdate();
         } else {
-            RadarTrack track = findTrack(be.getLevel(), pHit.getLocation(), be.getController());
+            Vec3 hit = pHit.getLocation();
+            var pick = pPlayer.pick(5, 0.0F, false);
+            if (pick instanceof BlockHitResult pickHit) {
+                hit = pickHit.getLocation();
+            }
+            RadarTrack track = findTrack(be.getLevel(), hit, be.getController());
             if (track != null) {
                 be.selectedEntity = track.id();
                 be.setSelectedTargetServer(track);

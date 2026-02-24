@@ -11,6 +11,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ComputeFovModifierEvent;
 import net.minecraftforge.client.event.RenderHandEvent;
+import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -21,9 +22,14 @@ public class BinocularHandler {
     private static final Logger LOGGER = LogUtils.getLogger();
     private static boolean wasDown = false;
     private static boolean pressWasValid = false;
-
+    private static final float SENS_MULTIPLIER = 0.25f;
+    private static final float BINOCULAR_FOV = .1f; // ~6–7x zoom
     private static int updateCooldown = 0;
+    private static float lastYaw;
+    private static float lastPitch;
+    private static boolean hadLast;
 
+    private static Double savedSensitivity = null;
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
@@ -31,6 +37,22 @@ public class BinocularHandler {
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
         if (player == null) return;
+
+        // i slow look while the player is actively using binoculars, and restore it when they stop
+        boolean usingBinos = player.isUsingItem() && (player.getUseItem().getItem() instanceof Binoculars);
+
+        var sensOpt = mc.options.sensitivity();
+        if (usingBinos) {
+            if (savedSensitivity == null) {
+                savedSensitivity = sensOpt.get();
+            }
+            sensOpt.set(savedSensitivity * SENS_MULTIPLIER);
+        } else {
+            if (savedSensitivity != null) {
+                sensOpt.set(savedSensitivity);
+                savedSensitivity = null;
+            }
+        }
 
         boolean isDown = ModKeybinds.BINO_FIRE.isDown();
         while (ModKeybinds.SCOPE_ACTION.consumeClick()) {
@@ -90,12 +112,12 @@ public class BinocularHandler {
             event.setCanceled(true);
         }
     }
-    private static final float BINOCULAR_FOV = .1f; // ~6–7x zoom
 
     @SubscribeEvent
     public static void onComputeFov(ComputeFovModifierEvent event) {
         Player player = event.getPlayer();
         if (player == null) return;
+
 
         // i only zoom while actively scoping with my binoculars
         if (!player.isUsingItem()) return;
@@ -104,6 +126,5 @@ public class BinocularHandler {
         float target = BINOCULAR_FOV;
         event.setNewFovModifier(BINOCULAR_FOV);
     }
-
 }
 

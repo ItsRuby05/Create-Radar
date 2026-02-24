@@ -48,7 +48,7 @@ public class WeaponFiringControl {
 
     private Vec3 lastOffsetAim = null;
     private int aimStableTicks = 0;
-    private static final int AIM_STABLE_REQUIRED = 1;
+    private static final int AIM_STABLE_REQUIRED = 2;
     private static final double AIM_STABLE_EPS = 0.5; // blocks
 
 
@@ -772,7 +772,7 @@ public class WeaponFiringControl {
         Vec3 targetVel;
         Vec3 targetAccel;
         boolean lag;
-        if(VS2Utils.isBlockInShipyard(level,cannonMount.getBlockPos())){
+        if(Mods.VALKYRIENSKIES.isLoaded() && VS2Utils.isBlockInShipyard(level,cannonMount.getBlockPos())){
             Ship mountship = VSGameUtilsKt.getShipManagingPos(level,cannonMount.getBlockPos());
             if(mountship ==null){
                 shooterVel = Vec3.ZERO;
@@ -802,7 +802,7 @@ public class WeaponFiringControl {
             return;
         }
         double dist = getCannonRayStart().distanceTo(target);
-        double noLeadDist = 8.0; // tune this
+        double noLeadDist = 1; // tune this
 
         Vec3 solvePos = target;
 
@@ -817,7 +817,7 @@ public class WeaponFiringControl {
 
             solvePos = targetEntity.position();
         }
-        double maxSpeed = 0.25; // 5 m/s in blocks/tick
+        double maxSpeed = 0.01; // 5 m/s in blocks/tick
         double maxSpeedSqr = maxSpeed * maxSpeed;
 
         if (targetVel.lengthSqr() > maxSpeedSqr) {
@@ -827,11 +827,11 @@ public class WeaponFiringControl {
         }
         CannonLead.LeadSolution lead = null;
         if (!CannonUtil.isLaserCannon(cannonContraption) && dist > noLeadDist) {
-            lead = CannonLead.solveLeadPerTickWithAcceleration(
+            lead = CannonLead.solveLeadPerTickConstantVelocity(
                     cannonMount, cannonContraption, serverLevel,
-                    shooterVel, shooterAccel,
+                    shooterVel,
                     solvePos,
-                    targetVel, targetAccel,
+                    targetVel,
                     RadarConfig.server().leadFiringDelay.get(),
                     maxSimDistanceBlocks);
         }
@@ -909,9 +909,10 @@ public class WeaponFiringControl {
         boolean yawPitchOk = hasCorrectYawPitch(lag);
         boolean safeOk = !passesSafeZone();
         boolean cannonReady = CannonUtil.isCannonReadyToFire(cannonMount);
+        boolean stableOk = (aimStableTicks >= AIM_STABLE_REQUIRED) || (!lag);
 
         if (level.getGameTime() % 20 == 0) {
-            LOGGER.warn("WFC FIREGATES: auto={} lead={} laserNoLead={} yawPitchOk={} safeOk={} cannonReady={} firingBE={} target={} aim={} offset={} stable={}/{}", auto, hasLeadSolution, canFireWithoutLead, yawPitchOk, safeOk, cannonReady, fireController != null, target, offsetAim, offset, aimStableTicks, AIM_STABLE_REQUIRED);
+            LOGGER.warn("WFC FIREGATES: auto={} lead={} laserNoLead={} yawPitchOk={} safeOk={} cannonReady={} stableOk={} firingBE={} target={} aim={} offset={} stable={}/{}", auto, hasLeadSolution, canFireWithoutLead, yawPitchOk, safeOk, cannonReady, stableOk, fireController != null, target, offsetAim, offset, aimStableTicks, AIM_STABLE_REQUIRED);
             if (!yawPitchOk) {
                 LOGGER.warn("WFC AIMCHK: yawCtrl={} pitchCtrl={} atYaw={} atPitch={} targYaw={} targPitch={}", yawController != null ? yawController.getBlockPos() : null, pitchController != null ? pitchController.getBlockPos() : null, yawController != null && yawController.atTargetYaw(lag), pitchController != null && pitchController.atTargetPitch(lag), yawController != null ? yawController.getTargetAngle() : null, pitchController != null ? pitchController.getTargetAngle() : null);
             }
@@ -920,6 +921,7 @@ public class WeaponFiringControl {
             if (!safeOk) LOGGER.warn("WFC BLOCK: safe zone violation");
             if (!cannonReady) LOGGER.warn("WFC BLOCK: cannon not ready");
             if (!yawPitchOk) LOGGER.warn("WFC BLOCK: yaw/pitch not aligned");
+            if (!stableOk) LOGGER.warn("WFC BLOCK: aim not stable");
         }
 
         boolean shouldFire =
@@ -928,7 +930,7 @@ public class WeaponFiringControl {
                         && yawPitchOk
                         && safeOk
                         && cannonReady
-                        && ((aimStableTicks >= AIM_STABLE_REQUIRED) || (!lag));
+                        && stableOk;
 
         if (fireController != null) {
             if (shouldFire) tryFireCannon();

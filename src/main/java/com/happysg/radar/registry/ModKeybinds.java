@@ -25,8 +25,8 @@ public class ModKeybinds {
     );
     public static final KeyMapping BINO_FIRE = new KeyMapping(
             CreateRadar.MODID + ".key.binocular.fire",
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_B,
+            InputConstants.Type.MOUSE,
+            GLFW.GLFW_MOUSE_BUTTON_LEFT,
             CATEGORY
     );
 

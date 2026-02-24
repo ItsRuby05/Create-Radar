@@ -1,7 +1,7 @@
 package com.happysg.radar.block.controller.firing;
 
 
-import com.happysg.radar.block.behavior.networks.WeaponNetwork;
+
 import com.happysg.radar.block.behavior.networks.WeaponNetworkData;
 import com.happysg.radar.block.datalink.DataLinkBlock;
 import com.happysg.radar.registry.ModBlockEntityTypes;
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 public class FireControllerBlock extends Block implements EntityBlock {
 
     public static BooleanProperty POWERED = BlockStateProperties.POWERED;
-    public WeaponNetwork weaponNetwork;
+
 
     public FireControllerBlock(Properties properties) {
         super(properties);

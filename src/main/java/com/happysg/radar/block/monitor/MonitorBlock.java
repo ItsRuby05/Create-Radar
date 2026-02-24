@@ -1,6 +1,7 @@
 package com.happysg.radar.block.monitor;
 
 import com.happysg.radar.block.behavior.networks.NetworkData;
+import com.happysg.radar.config.RadarConfig;
 import com.happysg.radar.registry.ModBlockEntityTypes;
 import com.mojang.logging.LogUtils;
 import com.simibubi.create.foundation.block.IBE;
@@ -46,13 +47,13 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements IBE<Moni
     }
 
     @Override
-    public void onPlace(BlockState pState, Level pLevel, BlockPos pPos, BlockState pOldState, boolean pMovedByPiston) {
+    public void onPlace(@NotNull BlockState pState, @NotNull Level pLevel, @NotNull BlockPos pPos, @NotNull BlockState pOldState, boolean pMovedByPiston) {
         super.onPlace(pState, pLevel, pPos, pOldState, pMovedByPiston);
         MonitorMultiBlockHelper.onPlace(pState, pLevel, pPos, pOldState, pMovedByPiston);
     }
 
     @Override
-    public void onRemove(BlockState pState, Level pLevel, BlockPos pPos, BlockState pNewState, boolean pIsMoving) {
+    public void onRemove(@NotNull BlockState pState, @NotNull Level pLevel, @NotNull BlockPos pPos, @NotNull BlockState pNewState, boolean pIsMoving) {
         MonitorMultiBlockHelper.onRemove(pState, pLevel, pPos, pNewState, pIsMoving);
         if (pLevel instanceof ServerLevel sl) {
             NetworkData.get(sl).onEndpointRemoved(sl, pPos);
@@ -68,9 +69,18 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements IBE<Moni
     }
 
     @Override
-    public InteractionResult use(BlockState pState, Level pLevel, BlockPos pPos, Player pPlayer, InteractionHand pHand, BlockHitResult pHit) {
+    public @NotNull InteractionResult use(@NotNull BlockState pState, @NotNull Level pLevel, @NotNull BlockPos pPos, Player pPlayer, @NotNull InteractionHand pHand, @NotNull BlockHitResult pHit) {
         if (!pPlayer.getMainHandItem().isEmpty() || pHand == InteractionHand.OFF_HAND)
             return InteractionResult.PASS;
+        if(RadarConfig.client().useGuiByDefault.get()){
+            BlockEntity be = pLevel.getBlockEntity(pPos);
+            if (be instanceof MonitorBlockEntity monitor) {
+                if (pLevel.isClientSide) {
+                    openMonitorScreenClient(monitor);
+                }
+                return InteractionResult.sidedSuccess(pLevel.isClientSide);
+            }
+        }
         if (pPlayer.isShiftKeyDown()) {
             BlockEntity be = pLevel.getBlockEntity(pPos);
             if (be instanceof MonitorBlockEntity monitor && isGuiHotspot(monitor, pHit)) {
@@ -80,8 +90,6 @@ public class MonitorBlock extends HorizontalDirectionalBlock implements IBE<Moni
                     openMonitorScreenClient(monitor);
                 } else {
                 }
-
-                // i return sided success so the click doesn't keep propagating
                 return InteractionResult.sidedSuccess(pLevel.isClientSide);
             }
         }

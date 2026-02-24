@@ -10,6 +10,7 @@ import com.happysg.radar.compat.cbc.CannonTargeting;
 import com.happysg.radar.compat.cbc.CannonUtil;
 import com.happysg.radar.compat.cbc.VS2CannonTargeting;
 import com.happysg.radar.compat.vs2.PhysicsHandler;
+import com.happysg.radar.compat.vs2.VS2Utils;
 import com.mojang.logging.LogUtils;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollOptionBehaviour;
@@ -463,31 +464,41 @@ public class AutoPitchControllerBlockEntity extends KineticBlockEntity {
                 getSpeed(),
                 nearDeadbandDeg
         );
-
-        // if the change isn't big enough (especially when close), i hold position
+// deadband check (your existing nearDeadbandDeg)
         if (Math.abs(diff) <= nearDeadbandDeg) {
             double clamped = clampToLimitsCBC(targetAngle);
             mount.setPitch((float) clamped);
             mount.notifyUpdate();
-
-            // i stop running once we're within the chosen deadband
-            isRunning = false;
             return;
         }
 
-        double speedFactor = Math.abs(getSpeed()) / 32.0;
-        if (speedFactor <= 0.0)
-            return;
+        double rpm = Math.abs(getSpeed());
+        if (rpm <= 0.0) return;
 
-        double next;
-        if (Math.abs(diff) > speedFactor) {
-            next = currentPitch + Math.signum(diff) * speedFactor;
-        } else {
-            next = targetAngle;
+        if (rpm >= 256.0) {
+            double desiredContraptionPitch = targetAngle;
+
+            mount.setPitch((float) desiredContraptionPitch);
+            mount.notifyUpdate();
+            return;
         }
-        LOGGER.debug("ping" +mount);
-        mount.setPitch((float) next);
+
+        double stepDeg = rpm / 24.0;
+
+        double move = Math.signum(diff) * Math.min(Math.abs(diff), stepDeg);
+        double nextCtl = currentPitch + move;
+
+
+
+
+        mount.setPitch((float) nextCtl);
+
+
         mount.notifyUpdate();
+    }
+    public boolean snapping(){
+        double rpm = Math.abs(getSpeed());
+        return rpm == 256;
     }
     private void setTargetCBC(CannonMountBlockEntity mount, Vec3 targetPos) {
         if (level == null || !(level instanceof ServerLevel serverLevel))
@@ -947,7 +958,9 @@ public class AutoPitchControllerBlockEntity extends KineticBlockEntity {
         }
 
         if (mount.kind == MountKind.CBC && mount.cbc != null) {
+            Vec3 mountPos = mount.cbc.getBlockPos().getCenter();
             if (Mods.VALKYRIENSKIES.isLoaded() && PhysicsHandler.isBlockInShipyard(level, this.getBlockPos())) {
+                mountPos = VS2Utils.getWorldVec(level, mountPos);
                 List<List<Double>> angles = VS2CannonTargeting.calculatePitchAndYawVS2(mount.cbc, p, sl);
                 if (angles == null || angles.isEmpty() || angles.get(0).isEmpty()) return false;
             } else {

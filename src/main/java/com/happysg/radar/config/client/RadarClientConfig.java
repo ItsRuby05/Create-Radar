@@ -19,4 +19,5 @@ public class RadarClientConfig extends ConfigBase {
     public ConfigInt VS2Color = i(0xffff00, 0, "VS2Color", "This is the color of VS2 ships on the monitor");
     public ConfigInt itemcolor = i(0xffa500,0,"itemcolor", "This is the color of dropped items on the monitor");
     public ConfigInt neutralEntityColor = i(0xffffff, 0, "neutralEntityColor", "This is the color of neutral entities on the monitor");
+    public ConfigBool useGuiByDefault = b(true,"useGuiByDefault", "if any interaction with the monitor should open up the GUI");
 }

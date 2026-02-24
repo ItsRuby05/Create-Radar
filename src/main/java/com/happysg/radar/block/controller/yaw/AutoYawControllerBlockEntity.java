@@ -5,6 +5,7 @@ import com.happysg.radar.compat.Mods;
 import com.happysg.radar.compat.cbc.VS2CannonTargeting;
 import com.happysg.radar.compat.vs2.PhysicsHandler;
 import com.happysg.radar.config.RadarConfig;
+import com.mojang.logging.LogUtils;
 import com.simibubi.create.content.kinetics.base.DirectionalKineticBlock;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.scrollValue.ScrollOptionBehaviour;
@@ -174,7 +175,7 @@ public class AutoYawControllerBlockEntity extends KineticBlockEntity{
         notifyUpdate();
         setChanged();
     }
-
+    private long lastCbcYawWrittenTick = -1;
     /** Works for either mount type */
     public boolean atTargetYaw(boolean lag) {
         if (level == null) return false;
@@ -241,9 +242,17 @@ public class AutoYawControllerBlockEntity extends KineticBlockEntity{
             // isRunning = false;
             return;
         }
+        double rpm = Math.abs(getSpeed());
+        if (rpm <= 0) return;
 
-        double speedFactor = Math.abs(getSpeed()) / 32.0;
-        if (speedFactor <= 0) return;
+        if (rpm == 256.0) {
+            mount.setYaw((float) desiredYaw);
+            lastCbcYawWritten = wrap360(desiredYaw);
+            hasLastCbcYawWritten = true;
+            mount.notifyUpdate();
+            return;
+        }
+        double speedFactor = rpm / 24.0;
 
         double nextYaw;
         if (Math.abs(yawDiff) > speedFactor) {
@@ -253,13 +262,10 @@ public class AutoYawControllerBlockEntity extends KineticBlockEntity{
         }
 
         mount.setYaw((float) nextYaw);
-
         lastCbcYawWritten = wrap360(nextYaw);
         hasLastCbcYawWritten = true;
-
         mount.notifyUpdate();
     }
-
     private void rotatePhysBearing(PhysBearingBlockEntity mount) {
         ScrollOptionBehaviour<ContraptionController.LockedMode> mode = mount.getMovementMode();
         if (mode != null && mode.getValue() != ContraptionController.LockedMode.FOLLOW_ANGLE.ordinal()) {
@@ -276,7 +282,7 @@ public class AutoYawControllerBlockEntity extends KineticBlockEntity{
 
         // i convert physbearing degrees -> controller degrees (your mapping)
         double currentPhysDeg = wrap360(Math.toDegrees(actualRad));
-        double currentCtlDeg  = wrap360(360.0 - currentPhysDeg);
+        double currentCtlDeg = wrap360(360.0 - currentPhysDeg);
 
         // i keep desired in controller-space and clamp to my limits
         double desiredCtlDeg = clampYawToLimits(targetAngle);

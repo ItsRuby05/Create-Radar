@@ -66,6 +66,12 @@ public class WeaponFiringControl {
     private long targetShipId = -1;
     @Nullable private Vec3 lastAimPoint = null;
 
+    private List<List<Double>> cachedVS2Angles = null;
+    private Vec3 cachedVS2AimTarget = null;
+    private long cachedVS2SolveTick = -1;
+    private static final int VS2_SOLVE_INTERVAL = 3;
+    private static final double VS2_AIM_CHANGE_THRESHOLD = 0.3;
+
     private static final int VIS_REFRESH_TICKS = 3; // recompute every N ticks per entity
     private static final int MAX_POINTS_PER_REFRESH = 10; // ray budget per refresh
     private static final double ENTITY_INFLATE = 0.0; // grow AABB a bit for modded hitboxes
@@ -880,7 +886,19 @@ public class WeaponFiringControl {
         Double desiredYaw = null;
 
         if (Mods.VALKYRIENSKIES.isLoaded() && PhysicsHandler.isBlockInShipyard(level, cannonMount.getBlockPos())) {
-            List<List<Double>> angles = VS2CannonTargeting.calculatePitchAndYawVS2(cannonMount, offsetAim, serverLevel);
+            long now = level.getGameTime();
+            boolean needSolve = cachedVS2Angles == null
+                    || (now - cachedVS2SolveTick) >= VS2_SOLVE_INTERVAL
+                    || cachedVS2AimTarget == null
+                    || cachedVS2AimTarget.distanceToSqr(offsetAim) > VS2_AIM_CHANGE_THRESHOLD * VS2_AIM_CHANGE_THRESHOLD;
+
+            if (needSolve) {
+                cachedVS2Angles = VS2CannonTargeting.calculatePitchAndYawVS2(cannonMount, offsetAim, serverLevel);
+                cachedVS2AimTarget = offsetAim;
+                cachedVS2SolveTick = now;
+            }
+
+            List<List<Double>> angles = cachedVS2Angles;
             if (angles != null && !angles.isEmpty() && !angles.get(0).isEmpty()) {
                 desiredPitch = angles.get(0).get(0);
                 desiredYaw   = angles.get(0).get(1);
@@ -949,6 +967,9 @@ public class WeaponFiringControl {
         lastAimPoint = null;
         lastOffsetAim = null;
         aimStableTicks = 0;
+        cachedVS2Angles = null;
+        cachedVS2AimTarget = null;
+        cachedVS2SolveTick = -1;
 
         stopFireCannon();
     }

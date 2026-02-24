@@ -23,17 +23,16 @@ public class VS2CannonTargeting {
         if (contraption == null || !(contraption.getContraption() instanceof AbstractMountedCannonContraption cannonContraption)) {
             return null;
         }
-        float chargePower = CannonUtil.getInitialVelocity(cannonContraption, level);
 
-        Vec3 mountPos;
-        if(CannonUtil.isUp(mount)) {
-            mountPos = mount.getBlockPos().above(3).getCenter();
-        }else {
-            mountPos = mount.getBlockPos().below(3).getCenter();
-        }
+        Vec3 mountPos = mount.getBlockPos().getCenter();
         int barrelLength = CannonUtil.getBarrelLength(cannonContraption);
         Direction initialDirection = cannonContraption.initialOrientation();
 
+        if (CannonUtil.isLaserCannon(cannonContraption)) {
+            return calculatePitchAndYawVS2(level, 10000.0, targetPos, mountPos, barrelLength, initialDirection, 0.0, 0.0);
+        }
+
+        float chargePower = CannonUtil.getInitialVelocity(cannonContraption, level);
         double drag = CannonUtil.getProjectileDrag(cannonContraption, level);
         double gravity = CannonUtil.getProjectileGravity(cannonContraption, level);
 

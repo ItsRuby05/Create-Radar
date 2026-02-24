@@ -172,9 +172,14 @@ public class RadarScanningBlockBehavior extends BlockEntityBehaviour {
     }
 
     private boolean isInFovAndRange(Vec3 target) {
-        double distance = scanPos.distanceTo(target);
+        double horizontalDistance = Math.sqrt(Math.pow(target.x() - scanPos.x(), 2) + Math.pow(target.z() - scanPos.z(), 2));
+        double verticalDistance = Math.abs(target.y() - scanPos.y());
+        double yScanRange = RadarConfig.server().radarYScanRange.get();
 
-        if (distance < 2)
+        if (horizontalDistance > range || verticalDistance > yScanRange)
+            return false;
+
+        if (horizontalDistance < 2)
             return true;
 
         double angleToEntity = Math.toDegrees(Math.atan2(target.x() - scanPos.x(), target.z() - scanPos.z()));
@@ -182,7 +187,7 @@ public class RadarScanningBlockBehavior extends BlockEntityBehaviour {
         double angleDiff = Math.abs(angleToEntity - angle);
         if (angleDiff > 180) angleDiff = 360 - angleDiff;
 
-        return angleDiff <= fov / 2.0 && distance <= range;
+        return angleDiff <= fov / 2.0;
     }
 
     private void removeDeadTracks() {
@@ -229,7 +234,7 @@ public class RadarScanningBlockBehavior extends BlockEntityBehaviour {
         boolean scanAll =
                 scanPlayers && scanContraptions && scanMobs && scanAnimals && scanProjectiles && scanItems;
 
-        for (AABB aabb : splitAABB(getRadarAABB(), 999)) {
+        for (AABB aabb : splitAABB(getRadarAABB(), 256)) {
             if (scanAll) {
                 scannedEntities.addAll(level.getEntities(null, aabb));
                 continue;
@@ -259,7 +264,7 @@ public class RadarScanningBlockBehavior extends BlockEntityBehaviour {
 
     private void scanForVSTracks() {
         if (blockEntity.getLevel() == null || !Mods.VALKYRIENSKIES.isLoaded()) return;
-        splitAABB(getRadarAABB(), 999).forEach(aabb ->
+        splitAABB(getRadarAABB(), 256).forEach(aabb ->
                 VS2Utils.getLoadedShips(blockEntity.getLevel(), aabb).forEach(scannedShips::add));
 
         scannedShips.remove(VS2Utils.getShipManagingPos(blockEntity));
@@ -271,10 +276,13 @@ public class RadarScanningBlockBehavior extends BlockEntityBehaviour {
         double z = radarPos.getZ() + 0.5;
 
         double yScan = RadarConfig.server().radarYScanRange.get();
+        Level level = blockEntity.getLevel();
+        double minY = level != null ? Math.max(y - yScan, level.getMinBuildHeight()) : y - yScan;
+        double maxY = level != null ? Math.min(y + yScan, level.getMaxBuildHeight()) : y + yScan;
 
         return new AABB(
-                x - range, y - yScan, z - range,
-                x + range, y + yScan, z + range
+                x - range, minY, z - range,
+                x + range, maxY, z + range
         );
     }
 

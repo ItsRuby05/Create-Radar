@@ -17,9 +17,16 @@ public class RadarTrackUtil {
 
     public static RadarTrack getRadarTrack(Ship ship, Level level) {
         return new RadarTrack(String.valueOf(ship.getId()), getPosition(ship), getVelocity(ship), level.getGameTime(),
-                TrackCategory.VS2, "VS2:ship", ship.getShipAABB().maxY());
+                TrackCategory.VS2, "VS2:ship", getShipSize(ship));
     }
 
+    public static int getShipSize(Ship ship){
+        if(ship.getShipAABB()!= null){
+            return ship.getShipAABB().maxY();
+        }else{
+            return 1;
+        }
+    }
     public static Vec3 getVelocity(Ship ship) {
         return new Vec3(ship.getVelocity().x(), ship.getVelocity().y(), ship.getVelocity().z());
     }

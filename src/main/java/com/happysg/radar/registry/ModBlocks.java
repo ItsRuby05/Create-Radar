@@ -123,6 +123,7 @@ public class ModBlocks {
             REGISTRATE.block("radar_dish_block", properties -> new AbstractRadarFrame(properties, ModShapes.RADAR_DISH))
                     .lang("Radar Dish")
                     .initialProperties(SharedProperties::softMetal)
+
 //                    .transform(BlockStressDefaults.setImpact(0))
                     .properties(p -> p.noOcclusion())
                     .properties(p -> p.strength(0.8f))

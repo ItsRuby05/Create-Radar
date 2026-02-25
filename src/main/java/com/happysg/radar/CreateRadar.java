@@ -21,8 +21,15 @@ import com.mojang.logging.LogUtils;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.simibubi.create.api.stress.BlockStressValues;
 
+import com.simibubi.create.foundation.item.ItemDescription;
+import com.simibubi.create.foundation.item.KineticStats;
+import com.simibubi.create.foundation.item.TooltipHelper;
+import com.simibubi.create.foundation.item.TooltipModifier;
+import net.createmod.catnip.lang.FontHelper;
 import net.createmod.ponder.foundation.PonderIndex;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.LevelAccessor;
 
 import net.minecraftforge.client.ConfigScreenHandler;
@@ -131,6 +138,8 @@ public class CreateRadar {
         MinecraftForge.EVENT_BUS.addListener(MonitorInputHandler::monitorPlayerHovering);
     }
 
+
+
     public static void onLoadComplete(FMLLoadCompleteEvent event) {
 
     }
@@ -162,6 +171,8 @@ public class CreateRadar {
         ModDisplayBehaviors.register();
         AllDataBehaviors.registerDefaults();
     }
-
+    static {
+        REGISTRATE.setTooltipModifierFactory((item) -> (new ItemDescription.Modifier(item, FontHelper.Palette.STANDARD_CREATE)));
+    }
 
 }

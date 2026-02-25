@@ -104,13 +104,13 @@ public class PonderScenes {
         Selection networkcontroller = util.select().position(4,1,4);
         scene.world().showSection(networkcontroller,Direction.DOWN);
         scene.idle(30);
-        scene.overlay().showText(40)
+        scene.overlay().showText(100)
                 .text("")
                 .pointAt(networkcontroller.getCenter())
                 .attachKeyFrame()
                 .placeNearTarget();
-        scene.idle(40);
-        scene.overlay().showText(40)
+        scene.idle(120);
+        scene.overlay().showText(100)
                 .text("")
                 .pointAt(networkcontroller.getCenter())
                 .attachKeyFrame()

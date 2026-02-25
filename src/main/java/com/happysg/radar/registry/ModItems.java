@@ -19,6 +19,7 @@ public class ModItems {
     public static final ItemEntry<IdentFilterItem> IDENT_FILTER_ITEM = REGISTRATE.item("ident_filter_item",IdentFilterItem::new)
             .register();
     public static final ItemEntry<TargetFilterItem> TARGET_FILTER_ITEM = REGISTRATE.item("target_filter_item", TargetFilterItem::new)
+
             .register();
     public static final ItemEntry<Binoculars> BINOCULARS =
             REGISTRATE.item("binoculars", p -> new Binoculars(p.stacksTo(1)))

@@ -201,6 +201,7 @@ public class PonderScenes {
 
 
         BlockPos link = util.grid().at(1, 2, 2);
+        scene.world().showSection(util.select().position(link), Direction.EAST);
         scene.overlay().chaseBoundingBoxOutline(PonderPalette.INPUT, cannonMount, new AABB(new BlockPos(2,3,2)), 60);
         scene.overlay().chaseBoundingBoxOutline(PonderPalette.OUTPUT, link, new AABB(link).contract(-.5f, 0, 0), 60);
         scene.overlay().showText(60)
@@ -210,7 +211,6 @@ public class PonderScenes {
                 .colored(PonderPalette.OUTPUT)
                 .placeNearTarget();
         scene.idle(50);
-        scene.world().showSection(util.select().position(link), Direction.EAST);
         Selection pitchController = util.select().position(2,3,1);
         scene.idle(60);
 
